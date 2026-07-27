@@ -2,8 +2,15 @@
 name = "docpack"
 version = "1.0.0"
 edition = "2021"
-description = "Pack directories/files into DOCX documents"
-authors = ["DocPack"]
+description = "Pack directories and files into a single DOCX for AI chat upload — and unpack them back"
+authors = ["bobwen-dev"]
+license = "MIT"
+repository = "https://github.com/bobwen-dev/docpack"
+homepage = "https://github.com/bobwen-dev/docpack"
+readme = "README.md"
+keywords = ["docx", "pack", "unpack", "codebase", "ai-context", "chatgpt", "claude", "document"]
+categories = ["command-line-utilities", "text-processing"]
+exclude = ["icon-large.png"]
 
 [lib]
 crate-type = ["lib"]

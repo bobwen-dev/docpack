@@ -1,15 +1,64 @@
+<!--
+docpack: v1.0.0
+lang: Rust
+edition: 2021
+crate-type: library + binary
+keywords: docx, pack, unpack, codebase, ai-context, chatgpt, claude
+-->
+
 # DocPack
 
-Pack an entire directory tree into a single DOCX document — and unpack it back.
+**Pack an entire project directory into a single DOCX document — drag it into any AI chat — and unpack it back to files.**
 
-[![Rust](https://img.shields.io/badge/rust-2021_edition-blue)](https://www.rust-lang.org)
+[![Rust 2021](https://img.shields.io/badge/rust-2021_edition-blue)](https://www.rust-lang.org)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
+[![GitHub release](https://img.shields.io/github/v/release/bobwen-dev/docpack)](https://github.com/bobwen-dev/docpack/releases)
+[![MIT license](https://img.shields.io/github/license/bobwen-dev/docpack)](LICENSE)
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Why](#why)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Library API](#library-api)
+- [Project Structure](#project-structure)
+- [Output Example](#output-example)
+- [Exclude Rules](#exclude-rules)
+- [Settings](#settings)
+- [Build](#build)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Features
+
+- **One-shot AI context** — bundle your whole codebase into a single DOCX and drag it into ChatGPT, Claude, Gemini, DeepSeek, Kimi, or any chat UI that accepts DOCX files.
+- **Text auto-detection** — distinguishes text from binary files using BOM detection, encoding validation, and meaningful-character heuristics. Binary files are skipped with a count shown.
+- **Multi-encoding support** — reads files in UTF-8, GBK, SHIFT_JIS, EUC-KR, and more (configurable). Falls back to lossy UTF-8 for unreadable files.
+- **DOCX roundtrip** — files packed by DocPack can be unpacked back to their original filenames and contents. File paths use `/` separators for cross-platform compatibility.
+- **Auto-rename** — if the output file or unpack directory already exists, DocPack appends `_1`, `_2`, etc. instead of overwriting.
+- **Cross-platform paths** — headings in the DOCX always use `/` separators, so a DOCX created on Windows unpacks correctly on macOS and Linux.
+- **i18n** — UI available in English, 简体中文, and 繁體中文.
+- **Single binary** — no runtime, no dependencies, no install-anything.
+
+## Quick Start
+
+```bash
+# Download the binary from GitHub Releases, or build from source:
+cargo install docpack
+
+# Pack the current directory into a DOCX
+docpack pack . -o project.docx
+
+# Drag project.docx into your AI chat — done.
+```
 
 ## Why
 
-Web-based AI assistants (ChatGPT, Claude, Gemini, DeepSeek, Kimi, Wenxin Yiyan, Tongyi Qianwen, Doubao, and others) accept DOCX file uploads and parse their content natively. But they can't read an entire project directory in one shot — you either paste files one by one or zip them, which most chat UIs don't preview.
+Web-based AI assistants accept DOCX file uploads and parse their content natively. But they can't read an entire project directory in one shot — you either paste files one by one or zip them, which most chat UIs don't preview.
 
-DocPack bundles an entire codebase into a single DOCX that you can drag into any chat window. Every file becomes a section heading followed by its full content, ready for the AI to read, search, and reason about your project as a whole.
+DocPack converts any directory tree into a structured DOCX document. Every file becomes a section heading followed by its full content, ready for the AI to read, search, and reason about your project as a whole.
 
 ## Installation
 
@@ -60,7 +109,85 @@ docpack unpack archive.docx
 docpack unpack archive.docx -o ./output
 ```
 
-### Exclude Rules
+## Library API
+
+DocPack is also a Rust library. Add it to your `Cargo.toml`:
+
+```toml
+[dependencies]
+docpack = "1.0"
+```
+
+```rust
+use docpack::{pack_dir, write_docx, read_docx, ExcludeRules};
+
+// Pack a directory into a DOCX
+let rules = ExcludeRules::new(vec!["target/", "*.png", "node_modules/"])?;
+let files = pack_dir("./my_project", &rules)?;
+write_docx("output.docx", &files)?;
+
+// Unpack a DOCX back to files
+let doc = read_docx("output.docx")?;
+for section in &doc.sections {
+    println!("{} → {} chars", section.heading, section.content.len());
+}
+```
+
+Public API modules:
+
+| Module | Purpose |
+|--------|---------|
+| [`pack`](src/pack.rs) | Directory traversal, file collection, text/binary detection |
+| [`unpack`](src/unpack.rs) | DOCX → file system extraction |
+| [`docx::writer`](src/docx/writer.rs) | DOCX generation (ZIP + Open XML) |
+| [`docx::reader`](src/docx/reader.rs) | DOCX parsing |
+| [`docx::model`](src/docx/model.rs) | `Document`, `Section` data structures |
+| [`ignore`](src/ignore.rs) | `.docpackignore` rule engine |
+| [`settings`](src/settings.rs) | Persistent JSON configuration |
+
+## Project Structure
+
+```
+src/
+├── lib.rs          # Public API — re-exports key types and functions
+├── main.rs         # Binary entry point
+├── cli.rs          # CLI argument parser (clap)
+├── gui.rs          # GUI window (eframe/egui)
+├── pack.rs         # Collect files from directory, detect text vs binary
+├── unpack.rs       # Extract DOCX back to original file tree
+├── docx/
+│   ├── writer.rs   # Build DOCX: ZIP archive + Open XML parts
+│   ├── reader.rs   # Parse DOCX back into Document model
+│   ├── model.rs    # Document, Section, Style data types
+│   └── style_gen.rs# Heading and paragraph style generation
+├── ignore.rs       # Gitignore-style pattern matching for excludes
+├── settings.rs     # User settings load/save
+├── lang.rs         # i18n: English, 简体中文, 繁體中文
+├── style.rs        # DOCX style constants
+├── icon_bytes.rs   # Embedded application icon
+├── constants.rs    # Shared constants
+└── platform/       # Platform-specific features (Windows context menu)
+```
+
+## Output Example
+
+When you pack a project, the resulting DOCX contains a hierarchical document:
+
+```
+MyProject/
+├── README.md          ← Heading 1: directory path
+├── src/                  ← Heading 1
+│   ├── main.rs           ← Heading 2: filename
+│   │   [full source]     ← Normal paragraph
+│   └── lib.rs            ← Heading 2
+│       [full source]
+└── Cargo.toml         ← Heading 1
+    [full content]
+```
+
+Each file becomes a heading with its relative path, followed by the complete file content — ready for AI to read in context.
+
+## Exclude Rules
 
 Create a `.docpackignore` file (gitignore syntax) in the project root:
 
@@ -75,16 +202,6 @@ dist/
 *.pdf
 !important.png
 ```
-
-## Features
-
-- **Text auto-detection** — distinguishes text from binary files using BOM detection, encoding validation, and meaningful-character heuristics. Binary files are skipped with a count shown.
-- **Multi-encoding support** — reads files in UTF-8, GBK, SHIFT_JIS, EUC-KR, and more (configurable). Falls back to lossy UTF-8 for unreadable files.
-- **DOCX roundtrip** — files packed by DocPack can be unpacked back to their original filenames and contents. File paths use `/` separators for cross-platform compatibility.
-- **Auto-rename** — if the output file or unpack directory already exists, DocPack appends `_1`, `_2`, etc. instead of overwriting.
-- **Cross-platform paths** — headings in the DOCX always use `/` separators, so a DOCX created on Windows unpacks correctly on macOS and Linux.
-- **i18n** — UI available in English, 简体中文, and 繁體中文.
-- **No dependencies** — single binary, no runtime, no install-anything.
 
 ## Settings
 
@@ -109,12 +226,17 @@ Configurable via the GUI Settings panel:
 cargo build --release
 ```
 
-## License
-
-MIT
+For cross-platform builds from any machine:
+- **Linux / macOS**: `cargo build --release`
+- **Windows**: `cargo build --release` (with MSVC or GNU toolchain)
 
 ## Contributing
 
 Issues and PRs welcome. Before submitting, please:
+
 1. Run `cargo test` — 127+ tests must pass
 2. Run `cargo build --release` on your target platform
+
+## License
+
+MIT
