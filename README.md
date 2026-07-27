@@ -2,7 +2,7 @@
 
 Pack an entire directory tree into a single DOCX document — and unpack it back.
 
-[![Rust](https://img.shields.io/badge/rust-2021-edition-blue)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-2021_edition-blue)](https://www.rust-lang.org)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
 
 ## Why
