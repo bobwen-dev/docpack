@@ -11,7 +11,7 @@ keywords: docx, pack, unpack, codebase, ai-context, chatgpt, claude
 **Pack an entire project directory into a single DOCX document — drag it into any AI chat — and unpack it back to files.**
 
 [![Rust 2021](https://img.shields.io/badge/rust-2021_edition-blue)](https://www.rust-lang.org)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/bobwen-dev/docpack/releases)
 [![GitHub release](https://img.shields.io/github/v/release/bobwen-dev/docpack)](https://github.com/bobwen-dev/docpack/releases)
 [![MIT license](https://img.shields.io/github/license/bobwen-dev/docpack)](LICENSE)
 
@@ -20,12 +20,10 @@ keywords: docx, pack, unpack, codebase, ai-context, chatgpt, claude
 - [Why](#why)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Library API](#library-api)
 - [Project Structure](#project-structure)
 - [Output Example](#output-example)
 - [Exclude Rules](#exclude-rules)
 - [Settings](#settings)
-- [Build](#build)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -45,20 +43,18 @@ keywords: docx, pack, unpack, codebase, ai-context, chatgpt, claude
 ## Quick Start
 
 ```bash
-# Download the binary from GitHub Releases, or build from source:
-git clone https://github.com/bobwen-dev/docpack
-cd docpack
-cargo build --release
-./target/release/docpack pack . -o project.docx
+# 1. Download a binary from the [Releases page](https://github.com/bobwen-dev/docpack/releases)
+# 2. Pack the current directory into a DOCX
+docpack pack . -o project.docx
 
-# Drag project.docx into your AI chat — done.
+# 3. Drag project.docx into your AI chat — done.
 ```
 
 ## Why
 
 Web-based AI assistants accept DOCX file uploads and parse their content natively. But they can't read an entire project directory in one shot — you either paste files one by one or zip them, which most chat UIs don't preview.
 
-DocPack converts any directory tree into a structured DOCX document. Every file becomes a section heading followed by its full content, ready for the AI to read, search, and reason about your project as a whole.
+DocPack converts any directory tree into a DOCX document. Every file becomes a heading (its relative path) followed by its full content, ready for the AI to read, search, and reason about your project as a whole.
 
 ## Installation
 
@@ -71,6 +67,10 @@ cargo build --release
 ```
 
 The binary is at `target/release/docpack` (or `docpack.exe` on Windows).
+
+Cross-platform builds:
+- **Linux / macOS**: `cargo build --release`
+- **Windows**: `cargo build --release` (with MSVC or GNU toolchain)
 
 ### Windows context menu (optional)
 
@@ -109,44 +109,7 @@ docpack unpack archive.docx
 docpack unpack archive.docx -o ./output
 ```
 
-## Library API
-
-DocPack is also a Rust library. Add it to your `Cargo.toml`:
-
-```toml
-[dependencies]
-docpack = "1.0"
-```
-
-```rust
-use docpack::{pack_dir, write_docx, read_docx, ExcludeRules};
-
-// Pack a directory into a DOCX
-let rules = ExcludeRules::new(vec!["target/", "*.png", "node_modules/"])?;
-let files = pack_dir("./my_project", &rules)?;
-write_docx("output.docx", &files)?;
-
-// Unpack a DOCX back to files
-let doc = read_docx("output.docx")?;
-for section in &doc.sections {
-    println!("{} → {} chars", section.heading, section.content.len());
-}
-```
-
-Public API modules:
-
-| Module | Purpose |
-|--------|---------|
-| [`pack`](src/pack.rs) | Directory traversal, file collection, text/binary detection |
-| [`unpack`](src/unpack.rs) | DOCX → file system extraction |
-| [`docx::writer`](src/docx/writer.rs) | DOCX generation (ZIP + Open XML) |
-| [`docx::reader`](src/docx/reader.rs) | DOCX parsing |
-| [`docx::model`](src/docx/model.rs) | `Document`, `Section` data structures |
-| [`ignore`](src/ignore.rs) | `.docpackignore` rule engine |
-| [`settings`](src/settings.rs) | Persistent JSON configuration |
-
 ## Project Structure
-
 ```
 src/
 ├── lib.rs          # Public API — re-exports key types and functions
@@ -158,7 +121,7 @@ src/
 ├── docx/
 │   ├── writer.rs   # Build DOCX: ZIP archive + Open XML parts
 │   ├── reader.rs   # Parse DOCX back into Document model
-│   ├── model.rs    # Document, Section, Style data types
+│   ├── model.rs    # Document, Paragraph, Run data types
 │   └── style_gen.rs# Heading and paragraph style generation
 ├── ignore.rs       # Gitignore-style pattern matching for excludes
 ├── settings.rs     # User settings load/save
@@ -222,21 +185,11 @@ Configurable via the GUI Settings panel:
 - **Local encodings** — fallback encodings when UTF-8 fails
 - **Context menu** — install / uninstall Windows right-click entries
 
-## Build
-
-```bash
-cargo build --release
-```
-
-For cross-platform builds from any machine:
-- **Linux / macOS**: `cargo build --release`
-- **Windows**: `cargo build --release` (with MSVC or GNU toolchain)
-
 ## Contributing
 
 Issues and PRs welcome. Before submitting, please:
 
-1. Run `cargo test` — 127+ tests must pass
+1. Run `cargo test` — all tests must pass
 2. Run `cargo build --release` on your target platform
 
 ## License
