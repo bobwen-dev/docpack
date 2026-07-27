@@ -16,7 +16,7 @@ DocPack bundles an entire codebase into a single DOCX that you can drag into any
 ### From source
 
 ```bash
-git clone https://github.com/anomalyco/docpack
+git clone https://github.com/bobwen-dev/docpack
 cd docpack
 cargo build --release
 ```
