@@ -171,21 +171,23 @@ src/
 
 ## Output Example
 
-When you pack a project, the resulting DOCX contains a hierarchical document:
+When you pack a project, the resulting DOCX is a flat sequence — each file becomes a Heading 1 (relative path) followed by its content as normal paragraphs:
 
 ```
-MyProject/
-├── README.md          ← Heading 1: directory path
-├── src/                  ← Heading 1
-│   ├── main.rs           ← Heading 2: filename
-│   │   [full source]     ← Normal paragraph
-│   └── lib.rs            ← Heading 2
-│       [full source]
-└── Cargo.toml         ← Heading 1
-    [full content]
+Heading 1: "README.md"
+  [full content of README.md]
+
+Heading 1: "Cargo.toml"
+  [full content of Cargo.toml]
+
+Heading 1: "src/main.rs"
+  [full content of src/main.rs]
+
+Heading 1: "src/lib.rs"
+  [full content of src/lib.rs]
 ```
 
-Each file becomes a heading with its relative path, followed by the complete file content — ready for AI to read in context.
+There are no directory headings, no multi-level headings, and no nested tree — every file is at the same level.
 
 ## Exclude Rules
 
