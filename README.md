@@ -46,10 +46,10 @@ keywords: docx, pack, unpack, codebase, ai-context, chatgpt, claude
 
 ```bash
 # Download the binary from GitHub Releases, or build from source:
-cargo install docpack
-
-# Pack the current directory into a DOCX
-docpack pack . -o project.docx
+git clone https://github.com/bobwen-dev/docpack
+cd docpack
+cargo build --release
+./target/release/docpack pack . -o project.docx
 
 # Drag project.docx into your AI chat — done.
 ```
