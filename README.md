@@ -192,6 +192,10 @@ Issues and PRs welcome. Before submitting, please:
 1. Run `cargo test` — all tests must pass
 2. Run `cargo build --release` on your target platform
 
+## Related
+
+Prefer **PDF** instead of DOCX? Check out [pack2pdf](https://github.com/bobwen-dev/pack2pdf) — same idea, PDF format with embedded images and CJK support.
+
 ## License
 
 MIT
