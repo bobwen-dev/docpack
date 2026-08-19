@@ -16,12 +16,17 @@ pub struct ExcludeRules {
 
 impl ExcludeRules {
     pub fn new() -> Self {
-        let mut rules = Self { patterns: Vec::new() };
+        let mut rules = Self {
+            patterns: Vec::new(),
+        };
         rules.set_defaults();
         rules
     }
 
-    pub fn load_or_default(exclude_path: Option<&std::path::Path>, settings_patterns: &[String]) -> Self {
+    pub fn load_or_default(
+        exclude_path: Option<&std::path::Path>,
+        settings_patterns: &[String],
+    ) -> Self {
         let rules = if let Some(p) = exclude_path {
             if p.exists() {
                 Self::load(p)
@@ -46,7 +51,9 @@ impl ExcludeRules {
     }
 
     pub fn from_rules_text(rules: &str) -> Self {
-        let mut r = Self { patterns: Vec::new() };
+        let mut r = Self {
+            patterns: Vec::new(),
+        };
         for line in rules.lines() {
             if let Some(rule) = parse_gitignore_line(line) {
                 r.patterns.push(rule);
@@ -100,7 +107,7 @@ impl ExcludeRules {
         let dir_only = pattern.ends_with('/');
         let anchored = pattern.starts_with('/') && !pattern.starts_with("//");
         let p = if negated { &pattern[1..] } else { pattern };
-        let p = if dir_only { &p[..p.len()-1] } else { p };
+        let p = if dir_only { &p[..p.len() - 1] } else { p };
         let rule = ExcludeRule {
             pattern: unescape_gitignore(p),
             negated,
@@ -213,7 +220,11 @@ fn glob_match(pattern: &str, path: &str, directory_only: bool, anchored: bool) -
     let is_anchored = anchored || pattern.contains('/');
 
     if is_anchored {
-        let pat = if pattern.starts_with('/') { &pattern[1..] } else { &pattern };
+        let pat = if pattern.starts_with('/') {
+            &pattern[1..]
+        } else {
+            &pattern
+        };
         if directory_only {
             return path == pat || path.starts_with(&format!("{}/", pat));
         }
@@ -223,7 +234,9 @@ fn glob_match(pattern: &str, path: &str, directory_only: bool, anchored: bool) -
     // Non-anchored: basename matching against each component
     if directory_only {
         // Match if any path component matches the pattern
-        return path.split('/').any(|component| glob_match_inner(&pattern, component));
+        return path
+            .split('/')
+            .any(|component| glob_match_inner(&pattern, component));
     }
 
     // Full path match or basename match
@@ -231,7 +244,8 @@ fn glob_match(pattern: &str, path: &str, directory_only: bool, anchored: bool) -
         return true;
     }
 
-    path.split('/').any(|component| glob_match_inner(&pattern, component))
+    path.split('/')
+        .any(|component| glob_match_inner(&pattern, component))
 }
 
 fn glob_match_inner(pattern: &str, path: &str) -> bool {

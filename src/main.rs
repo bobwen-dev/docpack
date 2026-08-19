@@ -15,12 +15,19 @@ fn main() {
     let app_settings = settings::load_settings();
 
     match cli.command {
-        Some(cli::Commands::Pack { paths, output, exclude }) => {
+        Some(cli::Commands::Pack {
+            paths,
+            output,
+            exclude,
+        }) => {
             let output = pack::resolve_output_name(&paths, &output);
-            let rules = ignore::ExcludeRules::load_or_default(exclude.as_deref(), &app_settings.exclude_patterns);
+            let rules = ignore::ExcludeRules::load_or_default(
+                exclude.as_deref(),
+                &app_settings.exclude_patterns,
+            );
 
             let on_progress: pack::ProgressFn = Box::new(move |p| {
-                use std::io::{Write, stderr};
+                use std::io::{stderr, Write};
                 match p.phase {
                     pack::ProgressPhase::Collecting => {
                         eprint!("\rCollecting files... {}/{}", p.current, p.total);
@@ -38,11 +45,21 @@ fn main() {
                 let _ = stderr().flush();
             });
 
-            let result = pack::pack_files(&paths, &output, &rules, &app_settings.local_encodings, Some(&on_progress));
+            let result = pack::pack_files(
+                &paths,
+                &output,
+                &rules,
+                &app_settings.local_encodings,
+                Some(&on_progress),
+            );
 
             match result {
                 Ok(res) => {
-                    println!("Packed {} files to {}", res.file_count, res.output_path.display());
+                    println!(
+                        "Packed {} files to {}",
+                        res.file_count,
+                        res.output_path.display()
+                    );
                     if res.binary_skipped > 0 {
                         println!("Binary files skipped: {}", res.binary_skipped);
                     }
@@ -59,7 +76,11 @@ fn main() {
 
             match unpack::unpack_docx(&input, &output) {
                 Ok(res) => {
-                    println!("Extracted {} files to {}", res.file_count, res.output_dir.display());
+                    println!(
+                        "Extracted {} files to {}",
+                        res.file_count,
+                        res.output_dir.display()
+                    );
                 }
                 Err(e) => {
                     eprintln!("Error: {}", e);
@@ -68,18 +89,17 @@ fn main() {
             }
         }
         Some(cli::Commands::Install) => {
-            let exe = std::env::current_exe().unwrap_or_else(|_| PathBuf::from(std::env::args().next().unwrap_or_default()));
+            let exe = std::env::current_exe()
+                .unwrap_or_else(|_| PathBuf::from(std::env::args().next().unwrap_or_default()));
             match platform::install::ContextMenu::install(&exe) {
                 Ok(()) => println!("Context menu installed"),
                 Err(e) => eprintln!("Error: {}", e),
             }
         }
-        Some(cli::Commands::Uninstall) => {
-            match platform::install::ContextMenu::uninstall() {
-                Ok(()) => println!("Context menu uninstalled"),
-                Err(e) => eprintln!("Error: {}", e),
-            }
-        }
+        Some(cli::Commands::Uninstall) => match platform::install::ContextMenu::uninstall() {
+            Ok(()) => println!("Context menu uninstalled"),
+            Err(e) => eprintln!("Error: {}", e),
+        },
         Some(cli::Commands::GuiPack { paths }) => {
             if let Err(e) = gui::run_gui_pack(app_settings, paths) {
                 eprintln!("GUI Error: {}", e);

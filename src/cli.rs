@@ -30,13 +30,9 @@ pub enum Commands {
     #[command(about = "Uninstall context menu")]
     Uninstall,
     #[command(name = "gui-pack", hide = true)]
-    GuiPack {
-        paths: Vec<PathBuf>,
-    },
+    GuiPack { paths: Vec<PathBuf> },
     #[command(name = "gui-unpack", hide = true)]
-    GuiUnpack {
-        paths: Vec<PathBuf>,
-    },
+    GuiUnpack { paths: Vec<PathBuf> },
 }
 
 impl Cli {

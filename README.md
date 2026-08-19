@@ -196,6 +196,8 @@ Issues and PRs welcome. Before submitting, please:
 
 Prefer **PDF** instead of DOCX? Check out [pack2pdf](https://github.com/bobwen-dev/pack2pdf) — same idea, PDF format with embedded images and CJK support.
 
+Prefer **plain text** you can paste and diff? Check out [pack2text](https://github.com/bobwen-dev/pack2text) — pack any selection into one readable `.txt` (or clipboard) with byte-exact reversible unpack and an Explorer context menu.
+
 ## License
 
 MIT

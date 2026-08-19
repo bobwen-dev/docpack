@@ -3,8 +3,8 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use crate::constants;
-use crate::lang::I18n;
 use crate::ignore::ExcludeRules;
+use crate::lang::I18n;
 use crate::pack;
 use crate::settings::Settings;
 use crate::style;
@@ -40,9 +40,7 @@ impl DocPackApp {
         let mut i18n = I18n::new();
         i18n.load_lang(&settings.language);
         let exclude_text = if settings.exclude_file.is_empty() {
-            crate::ignore::ExcludeRules::new()
-                .patterns()
-                .join("\n")
+            crate::ignore::ExcludeRules::new().patterns().join("\n")
         } else {
             std::mem::take(&mut settings.exclude_file)
         };
@@ -90,14 +88,17 @@ impl eframe::App for DocPackApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         ctx.set_pixels_per_point(style::PIXELS_PER_POINT);
         ctx.set_fonts(crate::style::get_font_definitions().clone());
-        
+
         self.process_drag_and_drop(ctx);
 
         egui::TopBottomPanel::top("header").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.heading(self.i18n.get("app_name"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.add(egui::Button::new("⚙").min_size(egui::vec2(28.0, 24.0))).clicked() {
+                    if ui
+                        .add(egui::Button::new("⚙").min_size(egui::vec2(28.0, 24.0)))
+                        .clicked()
+                    {
                         self.show_settings = !self.show_settings;
                     }
                 });
@@ -195,11 +196,8 @@ impl DocPackApp {
 
     fn show_main_panel(&mut self, ui: &mut egui::Ui) {
         if self.drag_hovered {
-            ui.painter().rect_filled(
-                ui.max_rect(),
-                10.0,
-                style::DRAG_HOVER_COLOR,
-            );
+            ui.painter()
+                .rect_filled(ui.max_rect(), 10.0, style::DRAG_HOVER_COLOR);
         }
 
         ui.label(self.i18n.get("select_path"));
@@ -213,7 +211,8 @@ impl DocPackApp {
                 if !self.source_paths.is_empty() {
                     for (i, path) in self.source_paths.iter().enumerate() {
                         let selected = self.selected_indices.contains(&i);
-                        let response = ui.selectable_label(selected, path.to_string_lossy().to_string());
+                        let response =
+                            ui.selectable_label(selected, path.to_string_lossy().to_string());
                         if selected {
                             response.scroll_to_me(Some(egui::Align::Center));
                         }
@@ -221,7 +220,9 @@ impl DocPackApp {
                             let shift = ui.input(|i| i.modifiers.shift);
                             let ctrl = ui.input(|i| i.modifiers.ctrl);
                             if ctrl {
-                                if let Some(pos) = self.selected_indices.iter().position(|x| *x == i) {
+                                if let Some(pos) =
+                                    self.selected_indices.iter().position(|x| *x == i)
+                                {
                                     self.selected_indices.remove(pos);
                                 } else {
                                     self.selected_indices.push(i);
@@ -241,15 +242,24 @@ impl DocPackApp {
             });
 
         // Handle keyboard navigation: arrows and delete
-        let arrow_down = ui.input(|i| i.key_pressed(egui::Key::ArrowDown) && self.last_arrow_pressed != Some(egui::Key::ArrowDown));
-        let arrow_up = ui.input(|i| i.key_pressed(egui::Key::ArrowUp) && self.last_arrow_pressed != Some(egui::Key::ArrowUp));
+        let arrow_down = ui.input(|i| {
+            i.key_pressed(egui::Key::ArrowDown)
+                && self.last_arrow_pressed != Some(egui::Key::ArrowDown)
+        });
+        let arrow_up = ui.input(|i| {
+            i.key_pressed(egui::Key::ArrowUp) && self.last_arrow_pressed != Some(egui::Key::ArrowUp)
+        });
         if arrow_down {
             self.last_arrow_pressed = Some(egui::Key::ArrowDown);
             let next = if self.selected_indices.is_empty() {
                 0
             } else {
                 let last = self.selected_indices.last().copied().unwrap_or(0);
-                if last + 1 < self.source_paths.len() { last + 1 } else { last }
+                if last + 1 < self.source_paths.len() {
+                    last + 1
+                } else {
+                    last
+                }
             };
             self.selected_indices = vec![next];
         } else if arrow_up {
@@ -258,10 +268,15 @@ impl DocPackApp {
                 self.source_paths.len().saturating_sub(1)
             } else {
                 let first = self.selected_indices.first().copied().unwrap_or(0);
-                if first > 0 { first - 1 } else { 0 }
+                if first > 0 {
+                    first - 1
+                } else {
+                    0
+                }
             };
             self.selected_indices = vec![prev];
-        } else if !ui.input(|i| i.key_down(egui::Key::ArrowDown) || i.key_down(egui::Key::ArrowUp)) {
+        } else if !ui.input(|i| i.key_down(egui::Key::ArrowDown) || i.key_down(egui::Key::ArrowUp))
+        {
             self.last_arrow_pressed = None;
         }
         if ui.input(|i| i.key_pressed(egui::Key::Delete)) {
@@ -288,23 +303,35 @@ impl DocPackApp {
 
         ui.horizontal(|ui| {
             ui.label(self.i18n.get("output_path"));
-            let out = self.output_path.as_ref()
+            let out = self
+                .output_path
+                .as_ref()
                 .map(|p| p.to_string_lossy().to_string())
                 .unwrap_or_default();
             let mut out_str = out.clone();
             ui.text_edit_singleline(&mut out_str);
             if out_str != out {
-                self.output_path = if out_str.is_empty() { None } else { Some(PathBuf::from(&out_str)) };
+                self.output_path = if out_str.is_empty() {
+                    None
+                } else {
+                    Some(PathBuf::from(&out_str))
+                };
             }
         });
 
         ui.add_space(style::SPACING_GAP);
 
         if self.file_count > 0 {
-            let msg = self.i18n.get("file_count").replace("{count}", &self.file_count.to_string());
+            let msg = self
+                .i18n
+                .get("file_count")
+                .replace("{count}", &self.file_count.to_string());
             ui.label(msg);
             if self.binary_skipped > 0 {
-                let msg = self.i18n.get("binary_skipped").replace("{count}", &self.binary_skipped.to_string());
+                let msg = self
+                    .i18n
+                    .get("binary_skipped")
+                    .replace("{count}", &self.binary_skipped.to_string());
                 ui.label(msg);
             }
         }
@@ -355,12 +382,16 @@ impl DocPackApp {
                     ui.label(self.i18n.get("exclude_file"));
                     ui.label(self.i18n.get("exclude_desc"));
                     ui.label(self.i18n.get("exclude_hint"));
-                    let _ = egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
-                        ui.add(egui::TextEdit::multiline(&mut self.exclude_text)
-                            .desired_width(f32::INFINITY)
-                            .desired_rows(8)
-                            .hint_text(self.i18n.get("exclude_hint_placeholder")));
-                    });
+                    let _ = egui::ScrollArea::vertical()
+                        .max_height(200.0)
+                        .show(ui, |ui| {
+                            ui.add(
+                                egui::TextEdit::multiline(&mut self.exclude_text)
+                                    .desired_width(f32::INFINITY)
+                                    .desired_rows(8)
+                                    .hint_text(self.i18n.get("exclude_hint_placeholder")),
+                            );
+                        });
                 }
                 1 => {
                     ui.label(self.i18n.get("encoding"));
@@ -368,22 +399,31 @@ impl DocPackApp {
                     ui.label(self.i18n.get("encoding_hint"));
                     let _ = egui::ScrollArea::vertical().show(ui, |ui| {
                         let encodings: Vec<String> = if self.settings.local_encodings.is_empty() {
-                            crate::settings::DEFAULT_LOCAL_ENCODINGS.iter().map(|s| s.to_string()).collect()
+                            crate::settings::DEFAULT_LOCAL_ENCODINGS
+                                .iter()
+                                .map(|s| s.to_string())
+                                .collect()
                         } else {
                             self.settings.local_encodings.clone()
                         };
                         let mut text: String = encodings.join("\n");
-                        let _ = egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
-                            ui.add(egui::TextEdit::multiline(&mut text)
-                                .desired_width(f32::INFINITY)
-                                .desired_rows(6)
-                                .hint_text(self.i18n.get("encoding_hint_placeholder")));
-                        });
-                        let new_encodings: Vec<String> = text.lines()
-                            .map(|l| l.trim().to_string())
-                            .collect();
+                        let _ = egui::ScrollArea::vertical()
+                            .max_height(200.0)
+                            .show(ui, |ui| {
+                                ui.add(
+                                    egui::TextEdit::multiline(&mut text)
+                                        .desired_width(f32::INFINITY)
+                                        .desired_rows(6)
+                                        .hint_text(self.i18n.get("encoding_hint_placeholder")),
+                                );
+                            });
+                        let new_encodings: Vec<String> =
+                            text.lines().map(|l| l.trim().to_string()).collect();
                         let encodings_to_save: Vec<String> = if new_encodings.is_empty() {
-                            crate::settings::DEFAULT_LOCAL_ENCODINGS.iter().map(|s| s.to_string()).collect()
+                            crate::settings::DEFAULT_LOCAL_ENCODINGS
+                                .iter()
+                                .map(|s| s.to_string())
+                                .collect()
                         } else {
                             new_encodings
                         };
@@ -409,20 +449,34 @@ impl DocPackApp {
                     if ui.button(self.i18n.get("install_context_menu")).clicked() {
                         let exe = std::env::current_exe().unwrap_or_default();
                         match crate::platform::install::ContextMenu::install(&exe) {
-                        Ok(()) => { self.state = AppState::Done(self.i18n.get("context_menu_installed")); }
-                        Err(e) => { self.state = AppState::Error(e); }
+                            Ok(()) => {
+                                self.state =
+                                    AppState::Done(self.i18n.get("context_menu_installed"));
+                            }
+                            Err(e) => {
+                                self.state = AppState::Error(e);
+                            }
                         }
                     }
                     if ui.button(self.i18n.get("uninstall_context_menu")).clicked() {
                         match crate::platform::install::ContextMenu::uninstall() {
-                            Ok(()) => { self.state = AppState::Done(self.i18n.get("context_menu_uninstalled")); }
-                            Err(e) => { self.state = AppState::Error(e); }
+                            Ok(()) => {
+                                self.state =
+                                    AppState::Done(self.i18n.get("context_menu_uninstalled"));
+                            }
+                            Err(e) => {
+                                self.state = AppState::Error(e);
+                            }
                         }
                     }
                 }
                 4 => {
                     ui.label(self.i18n.get("about"));
-                    ui.label(format!("{} v{}", self.i18n.get("app_name"), env!("CARGO_PKG_VERSION")));
+                    ui.label(format!(
+                        "{} v{}",
+                        self.i18n.get("app_name"),
+                        env!("CARGO_PKG_VERSION")
+                    ));
                     ui.label(self.i18n.get("app_desc"));
                 }
                 _ => {}
@@ -434,7 +488,10 @@ impl DocPackApp {
             let btn_w = 120.0;
             let space = (ui.available_width() - btn_w * 2.0 - style::SPACING).max(0.0);
             ui.add_space(space * 0.5);
-            if ui.add_sized([btn_w, 24.0], egui::Button::new(self.i18n.get("save"))).clicked() {
+            if ui
+                .add_sized([btn_w, 24.0], egui::Button::new(self.i18n.get("save")))
+                .clicked()
+            {
                 self.sync_exclude_to_settings();
                 if let Err(e) = crate::settings::save_settings(&self.settings) {
                     self.state = AppState::Error(e);
@@ -442,7 +499,10 @@ impl DocPackApp {
                 self.show_settings = false;
             }
             ui.add_space(style::SPACING);
-            if ui.add_sized([btn_w, 24.0], egui::Button::new(self.i18n.get("cancel"))).clicked() {
+            if ui
+                .add_sized([btn_w, 24.0], egui::Button::new(self.i18n.get("cancel")))
+                .clicked()
+            {
                 self.settings = crate::settings::load_settings();
                 self.exclude_text = self.exclude_text_initial.clone();
                 self.i18n.load_lang(&self.settings.language);
@@ -461,8 +521,9 @@ impl DocPackApp {
             return; // already packing
         }
 
-        let output = self.output_path.clone()
-            .unwrap_or_else(|| pack::resolve_output_name(&self.source_paths, Path::new(constants::DEFAULT_OUTPUT)));
+        let output = self.output_path.clone().unwrap_or_else(|| {
+            pack::resolve_output_name(&self.source_paths, Path::new(constants::DEFAULT_OUTPUT))
+        });
 
         let rules = if self.exclude_text.trim().is_empty() {
             ExcludeRules::new()
@@ -472,7 +533,10 @@ impl DocPackApp {
 
         let sources = self.source_paths.clone();
         let local_encodings = if self.settings.local_encodings.is_empty() {
-            crate::settings::DEFAULT_LOCAL_ENCODINGS.iter().map(|s| s.to_string()).collect()
+            crate::settings::DEFAULT_LOCAL_ENCODINGS
+                .iter()
+                .map(|s| s.to_string())
+                .collect()
         } else {
             self.settings.local_encodings.clone()
         };
@@ -496,9 +560,21 @@ impl DocPackApp {
             });
 
             let result = if sources.len() == 1 && sources[0].is_dir() {
-                pack::pack_dir(&sources[0], &output, &rules, &local_encodings, Some(&on_progress))
+                pack::pack_dir(
+                    &sources[0],
+                    &output,
+                    &rules,
+                    &local_encodings,
+                    Some(&on_progress),
+                )
             } else {
-                pack::pack_files(&sources, &output, &rules, &local_encodings, Some(&on_progress))
+                pack::pack_files(
+                    &sources,
+                    &output,
+                    &rules,
+                    &local_encodings,
+                    Some(&on_progress),
+                )
             };
 
             let _ = tx.send(result);
@@ -585,7 +661,8 @@ pub fn run_gui(settings: Settings, initial_paths: Vec<PathBuf>) -> Result<(), St
             app.source_paths = initial_paths;
             Ok(Box::new(app))
         }),
-    ).map_err(|e| format!("GUI error: {}", e))
+    )
+    .map_err(|e| format!("GUI error: {}", e))
 }
 
 struct PackOnlyApp {
@@ -610,7 +687,9 @@ impl eframe::App for PackOnlyApp {
                     match result {
                         Ok(res) => {
                             self.is_ok = true;
-                            self.result_msg = self.i18n.get("pack_done")
+                            self.result_msg = self
+                                .i18n
+                                .get("pack_done")
                                 .replace("{count}", &res.file_count.to_string())
                                 .replace("{path}", &res.output_path.to_string_lossy());
                         }
@@ -647,21 +726,25 @@ impl eframe::App for PackOnlyApp {
                     ui.add_space(8.0);
                     match p.phase {
                         pack::ProgressPhase::Collecting => {
-                            ui.label(format!("{} {}/{}", self.i18n.get("scanning"), p.current, p.total));
+                            ui.label(format!(
+                                "{} {}/{}",
+                                self.i18n.get("scanning"),
+                                p.current,
+                                p.total
+                            ));
                         }
                         pack::ProgressPhase::Reading => {
                             ui.label(format!("{} ({}/{})", p.file, p.current, p.total));
                         }
                         _ => {
-                    ui.label(self.i18n.get("unpacking"));
+                            ui.label(self.i18n.get("unpacking"));
                         }
                     }
                 }
                 ui.add_space(16.0);
                 let ok_btn = ui.add_enabled(
                     self.done,
-                    egui::Button::new(self.i18n.get("ok"))
-                        .min_size(egui::vec2(80.0, 32.0)),
+                    egui::Button::new(self.i18n.get("ok")).min_size(egui::vec2(80.0, 32.0)),
                 );
                 if ok_btn.clicked() {
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
@@ -691,7 +774,10 @@ pub fn run_gui_pack(settings: Settings, paths: Vec<PathBuf>) -> Result<(), Strin
         ExcludeRules::from_rules_text(&app_settings.exclude_file)
     };
     let local_encodings = if app_settings.local_encodings.is_empty() {
-        crate::settings::DEFAULT_LOCAL_ENCODINGS.iter().map(|s| s.to_string()).collect()
+        crate::settings::DEFAULT_LOCAL_ENCODINGS
+            .iter()
+            .map(|s| s.to_string())
+            .collect()
     } else {
         app_settings.local_encodings.clone()
     };
@@ -713,14 +799,20 @@ pub fn run_gui_pack(settings: Settings, paths: Vec<PathBuf>) -> Result<(), Strin
             }
         });
 
-        let result = pack::pack_files(&paths, &output, &rules, &local_encodings, Some(&on_progress));
+        let result = pack::pack_files(
+            &paths,
+            &output,
+            &rules,
+            &local_encodings,
+            Some(&on_progress),
+        );
 
         let _ = tx.send(result);
     });
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-                    .with_inner_size((380.0, 150.0))
+            .with_inner_size((380.0, 150.0))
             .with_resizable(false)
             .with_icon(get_icon_data()),
         ..Default::default()
@@ -729,15 +821,18 @@ pub fn run_gui_pack(settings: Settings, paths: Vec<PathBuf>) -> Result<(), Strin
     eframe::run_native(
         constants::APP_NAME,
         options,
-        Box::new(move |_cc| Ok(Box::new(PackOnlyApp {
-            progress,
-            result_rx: Some(rx),
-            done: false,
-            result_msg: String::new(),
-            is_ok: true,
-            i18n,
-        }))),
-    ).map_err(|e| format!("GUI error: {}", e))
+        Box::new(move |_cc| {
+            Ok(Box::new(PackOnlyApp {
+                progress,
+                result_rx: Some(rx),
+                done: false,
+                result_msg: String::new(),
+                is_ok: true,
+                i18n,
+            }))
+        }),
+    )
+    .map_err(|e| format!("GUI error: {}", e))
 }
 
 pub fn run_gui_unpack(settings: Settings, paths: Vec<PathBuf>) -> Result<(), String> {
@@ -784,14 +879,17 @@ pub fn run_gui_unpack(settings: Settings, paths: Vec<PathBuf>) -> Result<(), Str
     eframe::run_native(
         constants::APP_NAME,
         options,
-        Box::new(move |_cc| Ok(Box::new(UnpackResultApp {
-            result_rx: Some(rx),
-            done: false,
-            result_msg: String::new(),
-            is_ok: true,
-            i18n,
-        }))),
-    ).map_err(|e| format!("GUI error: {}", e))
+        Box::new(move |_cc| {
+            Ok(Box::new(UnpackResultApp {
+                result_rx: Some(rx),
+                done: false,
+                result_msg: String::new(),
+                is_ok: true,
+                i18n,
+            }))
+        }),
+    )
+    .map_err(|e| format!("GUI error: {}", e))
 }
 
 struct UnpackResultApp {
@@ -815,7 +913,9 @@ impl eframe::App for UnpackResultApp {
                     match result {
                         Ok(res) => {
                             self.is_ok = true;
-                            self.result_msg = self.i18n.get("extracted_details")
+                            self.result_msg = self
+                                .i18n
+                                .get("extracted_details")
                                 .replace("{count}", &res.file_count.to_string())
                                 .replace("{path}", &res.output_dir.display().to_string());
                         }
@@ -843,8 +943,7 @@ impl eframe::App for UnpackResultApp {
                 ui.add_space(16.0);
                 let ok_btn = ui.add_enabled(
                     self.done,
-                    egui::Button::new(self.i18n.get("ok"))
-                        .min_size(egui::vec2(80.0, 32.0)),
+                    egui::Button::new(self.i18n.get("ok")).min_size(egui::vec2(80.0, 32.0)),
                 );
                 if ok_btn.clicked() {
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);

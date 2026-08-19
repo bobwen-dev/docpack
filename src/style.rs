@@ -2,7 +2,8 @@ use eframe::egui;
 use std::sync::OnceLock;
 
 pub const PIXELS_PER_POINT: f32 = 1.0;
-pub const DRAG_HOVER_COLOR: egui::Color32 = egui::Color32::from_rgba_premultiplied(204, 204, 255, 255);
+pub const DRAG_HOVER_COLOR: egui::Color32 =
+    egui::Color32::from_rgba_premultiplied(204, 204, 255, 255);
 pub const GRID_COLUMNS: usize = 3;
 pub const SPACING: f32 = 8.0;
 pub const SPACING_GAP: f32 = 4.0;
@@ -43,14 +44,33 @@ fn system_font_dirs() -> Vec<std::path::PathBuf> {
 
 fn cjk_font_names() -> &'static [&'static str] {
     if cfg!(target_os = "windows") {
-        &["msyh.ttc", "msyh.ttf", "msyhbd.ttc", "simsun.ttc", "simsun.ttf",
-          "simhei.ttf", "deng.ttf", "yahei.ttf", "yahei.ttc"]
+        &[
+            "msyh.ttc",
+            "msyh.ttf",
+            "msyhbd.ttc",
+            "simsun.ttc",
+            "simsun.ttf",
+            "simhei.ttf",
+            "deng.ttf",
+            "yahei.ttf",
+            "yahei.ttc",
+        ]
     } else if cfg!(target_os = "macos") {
-        &["PingFang.ttc", "STHeiti Light.ttc", "STHeiti Medium.ttc",
-          "NotoSansCJK-Regular.ttc", "Arial Unicode.ttf"]
+        &[
+            "PingFang.ttc",
+            "STHeiti Light.ttc",
+            "STHeiti Medium.ttc",
+            "NotoSansCJK-Regular.ttc",
+            "Arial Unicode.ttf",
+        ]
     } else {
-        &["wqy-zenhei.ttc", "wqy-zenhei.ttf", "NotoSansCJK-Regular.ttc",
-          "NotoSansCJK-Regular.ttf", "noto-sans-cjk.ttc"]
+        &[
+            "wqy-zenhei.ttc",
+            "wqy-zenhei.ttf",
+            "NotoSansCJK-Regular.ttc",
+            "NotoSansCJK-Regular.ttf",
+            "noto-sans-cjk.ttc",
+        ]
     }
 }
 
@@ -92,11 +112,14 @@ fn build_font_definitions() -> egui::FontDefinitions {
 
     if let Some(path) = find_system_cjk_font() {
         if let Ok(bytes) = std::fs::read(&path) {
-            let name = path.file_stem()
+            let name = path
+                .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or("CJK")
                 .to_string();
-            fonts.font_data.insert(name.clone(), egui::FontData::from_owned(bytes));
+            fonts
+                .font_data
+                .insert(name.clone(), egui::FontData::from_owned(bytes));
             if let Some(proportional) = fonts.families.get_mut(&egui::FontFamily::Proportional) {
                 proportional.push(name);
             }

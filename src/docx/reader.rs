@@ -55,7 +55,11 @@ fn parse_header(xml: &str) -> Option<String> {
         buf.clear();
     }
 
-    if text.is_empty() { None } else { Some(text) }
+    if text.is_empty() {
+        None
+    } else {
+        Some(text)
+    }
 }
 
 fn parse_body(xml: &str) -> Vec<Paragraph> {
@@ -125,7 +129,9 @@ fn parse_body(xml: &str) -> Vec<Paragraph> {
                         runs: if current_text.is_empty() {
                             vec![]
                         } else {
-                            vec![Run { text: current_text.clone() }]
+                            vec![Run {
+                                text: current_text.clone(),
+                            }]
                         },
                     });
                     current_text.clear();

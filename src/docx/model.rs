@@ -45,7 +45,10 @@ impl Document {
 
 impl Paragraph {
     pub fn is_heading(&self) -> bool {
-        self.style.as_deref().map(|s| s.starts_with("Heading")).unwrap_or(false)
+        self.style
+            .as_deref()
+            .map(|s| s.starts_with("Heading"))
+            .unwrap_or(false)
     }
 }
 

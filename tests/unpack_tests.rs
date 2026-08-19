@@ -1,8 +1,8 @@
-use docpack::unpack::unpack_docx;
-use docpack::pack::pack_dir;
 use docpack::docx::model::Document;
 use docpack::docx::writer::write_docx;
 use docpack::ignore::ExcludeRules;
+use docpack::pack::pack_dir;
+use docpack::unpack::unpack_docx;
 
 fn write_docx_to_file(doc: &Document, path: &std::path::Path) {
     let file = std::fs::File::create(path).unwrap();
@@ -111,7 +111,10 @@ fn test_unpack_multiple_body_paragraphs() {
 
     let file1 = unpack_dir.join("file1.txt");
     assert!(file1.exists());
-    assert_eq!(std::fs::read_to_string(file1).unwrap(), "line1\nline2\nline3");
+    assert_eq!(
+        std::fs::read_to_string(file1).unwrap(),
+        "line1\nline2\nline3"
+    );
 
     let file2 = unpack_dir.join("file2.txt");
     assert!(file2.exists());
@@ -175,7 +178,10 @@ fn test_unpack_multi_line_content_preserves_newlines() {
 
     let file1 = unpack_dir.join("file.txt");
     assert!(file1.exists());
-    assert_eq!(std::fs::read_to_string(file1).unwrap(), "line1\nline2\nline3");
+    assert_eq!(
+        std::fs::read_to_string(file1).unwrap(),
+        "line1\nline2\nline3"
+    );
 }
 
 #[test]

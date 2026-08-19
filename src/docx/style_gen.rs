@@ -53,7 +53,9 @@ fn default_styles() -> Vec<StyleDef> {
 }
 
 /// pt to twentieths of a point (1/20 pt): OOXML spacing unit
-fn pt_to_twips(pt: u32) -> u32 { pt * 20 }
+fn pt_to_twips(pt: u32) -> u32 {
+    pt * 20
+}
 
 pub fn generate_styles_xml() -> String {
     let mut xml = String::from(
@@ -73,8 +75,10 @@ pub fn generate_styles_xml() -> String {
             xml.push_str(&format!("    <w:next w:val=\"{}\"/>\n", next));
         }
 
-        let has_p_pr = style.keep_next || style.keep_lines
-            || style.spacing_before_pt > 0 || style.spacing_after_pt > 0
+        let has_p_pr = style.keep_next
+            || style.keep_lines
+            || style.spacing_before_pt > 0
+            || style.spacing_after_pt > 0
             || style.outline_lvl.is_some();
 
         if has_p_pr {

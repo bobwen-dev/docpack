@@ -116,7 +116,9 @@ fn test_negation() {
 
 #[test]
 fn test_anchored_pattern() {
-    let mut rules = ExcludeRules { patterns: Vec::new() };
+    let mut rules = ExcludeRules {
+        patterns: Vec::new(),
+    };
     rules.add_pattern("/build");
     assert!(rules.is_excluded("build"));
     assert!(!rules.is_excluded("src/build"));
@@ -133,7 +135,9 @@ fn test_directory_only() {
 
 #[test]
 fn test_directory_only_fresh() {
-    let mut rules = ExcludeRules { patterns: Vec::new() };
+    let mut rules = ExcludeRules {
+        patterns: Vec::new(),
+    };
     rules.add_pattern("logs/");
     assert!(rules.is_excluded("logs/app.log"));
     assert!(rules.is_excluded("logs"));

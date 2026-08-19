@@ -26,9 +26,18 @@ fn test_docx_model_add_text() {
 
 #[test]
 fn test_docx_model_is_heading() {
-    let h = docpack::docx::model::Paragraph { style: Some("Heading1".into()), runs: vec![] };
-    let h2 = docpack::docx::model::Paragraph { style: Some("Heading2".into()), runs: vec![] };
-    let t = docpack::docx::model::Paragraph { style: None, runs: vec![] };
+    let h = docpack::docx::model::Paragraph {
+        style: Some("Heading1".into()),
+        runs: vec![],
+    };
+    let h2 = docpack::docx::model::Paragraph {
+        style: Some("Heading2".into()),
+        runs: vec![],
+    };
+    let t = docpack::docx::model::Paragraph {
+        style: None,
+        runs: vec![],
+    };
     assert!(h.is_heading());
     assert!(h2.is_heading());
     assert!(!t.is_heading());

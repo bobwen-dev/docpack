@@ -97,7 +97,9 @@ fn test_docx_writer_carriage_return_escape() {
     doc.add_text("line1\r\nline2\rline3");
     let data = write_docx_to_bytes(&doc);
     let read_doc = read_docx(Cursor::new(data)).unwrap();
-    let body: String = read_doc.paragraphs.iter()
+    let body: String = read_doc
+        .paragraphs
+        .iter()
         .filter(|p| !p.is_heading())
         .flat_map(|p| p.runs.iter().map(|r| r.text.as_str()))
         .collect::<Vec<_>>()

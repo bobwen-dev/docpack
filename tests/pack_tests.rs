@@ -1,5 +1,5 @@
-use docpack::pack::{is_text_file, pack_dir, collect_text_files};
 use docpack::ignore::ExcludeRules;
+use docpack::pack::{collect_text_files, is_text_file, pack_dir};
 use std::io::Write;
 
 fn create_file(dir: &tempfile::TempDir, name: &str, data: &[u8]) {
@@ -137,7 +137,10 @@ fn test_is_text_file_shift_jis() {
     let sjis = &[0x82, 0xB1, 0x82, 0xF1, 0x82, 0xC9, 0x82, 0xBF, 0x82, 0xCD];
     create_file(&dir, "sjis.txt", sjis);
     assert!(!is_text_file(&dir.path().join("sjis.txt"), &[]));
-    assert!(is_text_file(&dir.path().join("sjis.txt"), &["Shift_JIS".into()]));
+    assert!(is_text_file(
+        &dir.path().join("sjis.txt"),
+        &["Shift_JIS".into()]
+    ));
 }
 
 #[test]
@@ -170,12 +173,18 @@ fn test_is_text_file_binary_no_nul_meaningless_gbk() {
     // Without GBK: binary (not valid UTF-8)
     assert!(!is_text_file(&dir.path().join("garbage.txt"), &[]));
     // With GBK configured: decodes without errors but produces C1 controls → not meaningful
-    assert!(!is_text_file(&dir.path().join("garbage.txt"), &["GBK".into()]));
+    assert!(!is_text_file(
+        &dir.path().join("garbage.txt"),
+        &["GBK".into()]
+    ));
 }
 
 #[test]
 fn test_is_text_file_nonexistent() {
-    assert!(!is_text_file(&std::path::Path::new("/nonexistent/foo.txt"), &[]));
+    assert!(!is_text_file(
+        &std::path::Path::new("/nonexistent/foo.txt"),
+        &[]
+    ));
 }
 
 #[test]

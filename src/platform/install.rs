@@ -31,7 +31,8 @@ impl ContextMenu {
             const CREATE_NO_WINDOW: u32 = 0x08000000;
             cmd.creation_flags(CREATE_NO_WINDOW);
         }
-        let output = cmd.output()
+        let output = cmd
+            .output()
             .map_err(|e| format!("reg command failed: {}", e))?;
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
@@ -76,13 +77,25 @@ impl ContextMenu {
     /// Try to add unpack menu under a specific ProgID in HKCU.
     /// Returns true on success. Cleans up partial writes on failure.
     fn try_add_progid_unpack_menu(progid: &str, unpack_cmd: &str) -> bool {
-        let base = format!("HKEY_CURRENT_USER\\Software\\Classes\\{}\\shell\\DocPackUnpack", progid);
+        let base = format!(
+            "HKEY_CURRENT_USER\\Software\\Classes\\{}\\shell\\DocPackUnpack",
+            progid
+        );
         // Display name
         if Self::run_reg(&["add", &base, "/ve", "/d", "Unpack DOCX here", "/f"]).is_err() {
             return false;
         }
         // Command
-        if Self::run_reg(&["add", &format!("{}\\command", base), "/ve", "/d", unpack_cmd, "/f"]).is_err() {
+        if Self::run_reg(&[
+            "add",
+            &format!("{}\\command", base),
+            "/ve",
+            "/d",
+            unpack_cmd,
+            "/f",
+        ])
+        .is_err()
+        {
             let _ = Self::run_reg(&["delete", &base, "/f"]);
             return false;
         }
@@ -96,10 +109,38 @@ impl ContextMenu {
 
         // Always-installed entries (pack on directories and all files)
         let entries = [
-            vec!["add", r"HKEY_CLASSES_ROOT\Directory\shell\DocPack", "/ve", "/d", "Pack with DocPack", "/f"],
-            vec!["add", r"HKEY_CLASSES_ROOT\Directory\shell\DocPack\command", "/ve", "/d", &pack_cmd, "/f"],
-            vec!["add", r"HKEY_CLASSES_ROOT\*\shell\DocPack", "/ve", "/d", "Pack with DocPack", "/f"],
-            vec!["add", r"HKEY_CLASSES_ROOT\*\shell\DocPack\command", "/ve", "/d", &pack_cmd, "/f"],
+            vec![
+                "add",
+                r"HKEY_CLASSES_ROOT\Directory\shell\DocPack",
+                "/ve",
+                "/d",
+                "Pack with DocPack",
+                "/f",
+            ],
+            vec![
+                "add",
+                r"HKEY_CLASSES_ROOT\Directory\shell\DocPack\command",
+                "/ve",
+                "/d",
+                &pack_cmd,
+                "/f",
+            ],
+            vec![
+                "add",
+                r"HKEY_CLASSES_ROOT\*\shell\DocPack",
+                "/ve",
+                "/d",
+                "Pack with DocPack",
+                "/f",
+            ],
+            vec![
+                "add",
+                r"HKEY_CLASSES_ROOT\*\shell\DocPack\command",
+                "/ve",
+                "/d",
+                &pack_cmd,
+                "/f",
+            ],
         ];
 
         for args in &entries {
@@ -115,8 +156,22 @@ impl ContextMenu {
 
         if !progid_ok {
             // Fallback: show on all files (unpack validates file type at runtime)
-            Self::run_reg(&["add", r"HKEY_CLASSES_ROOT\*\shell\DocPackUnpack", "/ve", "/d", "Unpack DOCX here", "/f"])?;
-            Self::run_reg(&["add", r"HKEY_CLASSES_ROOT\*\shell\DocPackUnpack\command", "/ve", "/d", &unpack_cmd, "/f"])?;
+            Self::run_reg(&[
+                "add",
+                r"HKEY_CLASSES_ROOT\*\shell\DocPackUnpack",
+                "/ve",
+                "/d",
+                "Unpack DOCX here",
+                "/f",
+            ])?;
+            Self::run_reg(&[
+                "add",
+                r"HKEY_CLASSES_ROOT\*\shell\DocPackUnpack\command",
+                "/ve",
+                "/d",
+                &unpack_cmd,
+                "/f",
+            ])?;
         }
 
         // Clear any stale *\shell entry left over from a previous fallback install,
@@ -154,7 +209,10 @@ impl ContextMenu {
         // Clean up ProgID-scoped entries under known Office ProgIDs
         let known_progids = ["Word.Document.12", "Word.Document.8", "Word.Document.6"];
         for progid in &known_progids {
-            let base = format!("HKEY_CURRENT_USER\\Software\\Classes\\{}\\shell\\DocPackUnpack", progid);
+            let base = format!(
+                "HKEY_CURRENT_USER\\Software\\Classes\\{}\\shell\\DocPackUnpack",
+                progid
+            );
             let _ = Self::run_reg(&["delete", &base, "/f"]);
         }
 

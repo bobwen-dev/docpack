@@ -105,15 +105,19 @@ fn is_utf16_no_bom(bytes: &[u8]) -> bool {
     // Verify non-NULL bytes in data positions are mostly printable
     let check_len = bytes.len().min(4096);
     let printable = if is_le {
-        (0..check_len / 2).filter(|&i| {
-            let c = bytes[2 * i];
-            c != 0 && (c.is_ascii_graphic() || c.is_ascii_whitespace())
-        }).count()
+        (0..check_len / 2)
+            .filter(|&i| {
+                let c = bytes[2 * i];
+                c != 0 && (c.is_ascii_graphic() || c.is_ascii_whitespace())
+            })
+            .count()
     } else {
-        (0..check_len / 2).filter(|&i| {
-            let c = bytes[2 * i + 1];
-            c != 0 && (c.is_ascii_graphic() || c.is_ascii_whitespace())
-        }).count()
+        (0..check_len / 2)
+            .filter(|&i| {
+                let c = bytes[2 * i + 1];
+                c != 0 && (c.is_ascii_graphic() || c.is_ascii_whitespace())
+            })
+            .count()
     };
     printable > check_len / 4
 }
@@ -154,17 +158,20 @@ fn is_meaningful_text(s: &str) -> bool {
     if total == 0 {
         return true;
     }
-    let bad = s.chars().filter(|&c| {
-        let u = c as u32;
-        u == 0
-            || u == 0xFFFD
-            || (u <= 0x1F && !matches!(u, 0x09 | 0x0A | 0x0C | 0x0D))
-            || u == 0x7F
-            || (0x80..=0x9F).contains(&u)
-            || (0xD800..=0xDFFF).contains(&u)
-            || (0xFDD0..=0xFDEF).contains(&u)
-            || (u & 0xFFFE) == 0xFFFE
-    }).count();
+    let bad = s
+        .chars()
+        .filter(|&c| {
+            let u = c as u32;
+            u == 0
+                || u == 0xFFFD
+                || (u <= 0x1F && !matches!(u, 0x09 | 0x0A | 0x0C | 0x0D))
+                || u == 0x7F
+                || (0x80..=0x9F).contains(&u)
+                || (0xD800..=0xDFFF).contains(&u)
+                || (0xFDD0..=0xFDEF).contains(&u)
+                || (u & 0xFFFE) == 0xFFFE
+        })
+        .count();
     bad * 10 <= total
 }
 
@@ -260,7 +267,10 @@ pub fn collect_text_files(
         return Err(format!("Expect directory, got file: {}", source.display()));
     }
 
-    Ok(TextFiles { text_files, binary_skipped })
+    Ok(TextFiles {
+        text_files,
+        binary_skipped,
+    })
 }
 
 fn build_doc_from_files(files: &[(PathBuf, String)]) -> crate::docx::model::Document {
@@ -274,11 +284,15 @@ fn build_doc_from_files(files: &[(PathBuf, String)]) -> crate::docx::model::Docu
 
 fn write_docx_file(doc: &crate::docx::model::Document, output: &Path) -> Result<(), String> {
     let parent = output.parent().unwrap_or(Path::new("."));
-    fs::create_dir_all(parent).map_err(|e| format!("Create output dir {}: {}", parent.display(), e))?;
+    fs::create_dir_all(parent)
+        .map_err(|e| format!("Create output dir {}: {}", parent.display(), e))?;
     crate::docx::writer::write_docx(
-        std::io::BufWriter::new(fs::File::create(output).map_err(|e| format!("Create output: {}", e))?),
+        std::io::BufWriter::new(
+            fs::File::create(output).map_err(|e| format!("Create output: {}", e))?,
+        ),
         doc,
-    ).map_err(|e| format!("Write DOCX: {}", e))
+    )
+    .map_err(|e| format!("Write DOCX: {}", e))
 }
 
 pub fn pack_dir(
@@ -306,13 +320,23 @@ pub fn pack_dir(
     }
 
     if let Some(ref cb) = on_progress {
-        cb(Progress { current: 0, total: 0, file: String::new(), phase: ProgressPhase::Writing });
+        cb(Progress {
+            current: 0,
+            total: 0,
+            file: String::new(),
+            phase: ProgressPhase::Writing,
+        });
     }
     let doc = build_doc_from_files(&doc_files);
     write_docx_file(&doc, output)?;
 
     if let Some(ref cb) = on_progress {
-        cb(Progress { current: 0, total: 0, file: String::new(), phase: ProgressPhase::Done });
+        cb(Progress {
+            current: 0,
+            total: 0,
+            file: String::new(),
+            phase: ProgressPhase::Done,
+        });
     }
 
     Ok(PackResult {
@@ -334,7 +358,13 @@ pub fn pack_files(
     }
 
     if sources.len() == 1 && sources[0].is_dir() {
-        return pack_dir(&sources[0], output, exclude_rules, local_encodings, on_progress);
+        return pack_dir(
+            &sources[0],
+            output,
+            exclude_rules,
+            local_encodings,
+            on_progress,
+        );
     }
 
     let mut all_files: Vec<(PathBuf, String)> = Vec::new();
@@ -363,7 +393,8 @@ pub fn pack_files(
                 continue;
             }
             let content = read_text_file(source, local_encodings)?;
-            let name = source.file_name()
+            let name = source
+                .file_name()
                 .map(PathBuf::from)
                 .unwrap_or_else(|| source.to_path_buf());
             all_files.push((name, content));
@@ -371,13 +402,34 @@ pub fn pack_files(
     }
 
     if let Some(ref cb) = on_progress {
-        cb(Progress { current: 0, total: 0, file: String::new(), phase: ProgressPhase::Writing });
+        cb(Progress {
+            current: 0,
+            total: 0,
+            file: String::new(),
+            phase: ProgressPhase::Writing,
+        });
     }
+
+    let mut seen = std::collections::HashSet::new();
+    for (rel, _) in &all_files {
+        if !seen.insert(rel.clone()) {
+            return Err(format!(
+                "duplicate file path in sources: {} (unpack would overwrite it)",
+                rel.display()
+            ));
+        }
+    }
+
     let doc = build_doc_from_files(&all_files);
     write_docx_file(&doc, output)?;
 
     if let Some(ref cb) = on_progress {
-        cb(Progress { current: 0, total: 0, file: String::new(), phase: ProgressPhase::Done });
+        cb(Progress {
+            current: 0,
+            total: 0,
+            file: String::new(),
+            phase: ProgressPhase::Done,
+        });
     }
 
     Ok(PackResult {
@@ -397,7 +449,9 @@ pub fn resolve_output_name(paths: &[PathBuf], explicit: &Path) -> PathBuf {
     } else if let Some(common) = find_common_parent(paths) {
         Some(common.to_path_buf())
     } else {
-        paths.first().and_then(|p| p.parent().map(|p| p.to_path_buf()))
+        paths
+            .first()
+            .and_then(|p| p.parent().map(|p| p.to_path_buf()))
     };
 
     let dir = dir.unwrap_or_else(|| PathBuf::from("."));
@@ -405,16 +459,19 @@ pub fn resolve_output_name(paths: &[PathBuf], explicit: &Path) -> PathBuf {
     let name = if paths.len() == 1 {
         let single = &paths[0];
         if single.is_file() {
-            single.file_stem()
+            single
+                .file_stem()
                 .map(|s| s.to_string_lossy().to_string())
                 .unwrap_or_else(|| "output".to_string())
         } else {
-            single.file_name()
+            single
+                .file_name()
                 .map(|s| s.to_string_lossy().to_string())
                 .unwrap_or_else(|| "output".to_string())
         }
     } else if let Some(common) = find_common_parent(paths) {
-        common.file_name()
+        common
+            .file_name()
             .map(|s| s.to_string_lossy().to_string())
             .unwrap_or_else(|| "output".to_string())
     } else {
@@ -425,9 +482,7 @@ pub fn resolve_output_name(paths: &[PathBuf], explicit: &Path) -> PathBuf {
 }
 
 fn find_common_parent(paths: &[PathBuf]) -> Option<PathBuf> {
-    let parents: Vec<&Path> = paths.iter()
-        .filter_map(|p| p.parent())
-        .collect();
+    let parents: Vec<&Path> = paths.iter().filter_map(|p| p.parent()).collect();
     if parents.is_empty() {
         return None;
     }
@@ -447,10 +502,12 @@ pub fn auto_rename(path: PathBuf) -> PathBuf {
     if !path.exists() {
         return path;
     }
-    let stem = path.file_stem()
+    let stem = path
+        .file_stem()
         .map(|s| s.to_string_lossy().to_string())
         .unwrap_or_default();
-    let ext = path.extension()
+    let ext = path
+        .extension()
         .map(|s| format!(".{}", s.to_string_lossy()))
         .unwrap_or_default();
     let dir = path.parent().unwrap_or(Path::new("."));
@@ -525,8 +582,8 @@ mod tests {
 
     #[test]
     fn test_is_meaningful_text_threshold() {
-        assert!(is_meaningful_text("1234567890"));       // 10 good, 0 bad → 0 ≤ 10 ✓
-        assert!(is_meaningful_text("123456789\u{01}"));  // 9 good + 1 bad = 10, 10 ≤ 10 ✓
+        assert!(is_meaningful_text("1234567890")); // 10 good, 0 bad → 0 ≤ 10 ✓
+        assert!(is_meaningful_text("123456789\u{01}")); // 9 good + 1 bad = 10, 10 ≤ 10 ✓
         assert!(is_meaningful_text("1234567890\u{01}")); // 10 good + 1 bad = 11, 10 ≤ 11 ✓
         assert!(!is_meaningful_text("12345678\u{01}\u{01}")); // 8 good + 2 bad = 10, 20 > 10 ✗
     }
@@ -539,5 +596,23 @@ mod tests {
     #[test]
     fn test_is_meaningful_text_allowable_controls() {
         assert!(is_meaningful_text("\t\n\r\u{0C}"));
+    }
+
+    #[test]
+    fn duplicate_rel_paths_rejected() {
+        use tempfile::TempDir;
+        let d = TempDir::new().unwrap();
+        let a = d.path().join("a");
+        let b = d.path().join("b");
+        std::fs::create_dir_all(&a).unwrap();
+        std::fs::create_dir_all(&b).unwrap();
+        std::fs::write(a.join("x.txt"), b"one").unwrap();
+        std::fs::write(b.join("x.txt"), b"two").unwrap();
+        let out = d.path().join("out.docx");
+        let rules = crate::ignore::ExcludeRules::new();
+        let enc: Vec<String> = Vec::new();
+        let result = pack_files(&[a, b], &out, &rules, &enc, None);
+        assert!(result.is_err());
+        assert!(!out.exists());
     }
 }

@@ -1,5 +1,5 @@
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 use crate::constants;
 use crate::docx::reader::read_docx;
@@ -14,7 +14,9 @@ fn is_forbidden_char(c: char) -> bool {
 }
 
 fn replace_forbidden_chars(text: &str) -> String {
-    text.chars().map(|c| if is_forbidden_char(c) { '_' } else { c }).collect()
+    text.chars()
+        .map(|c| if is_forbidden_char(c) { '_' } else { c })
+        .collect()
 }
 
 const WINDOWS_RESERVED_NAMES: &[&str] = constants::WINDOWS_RESERVED;
@@ -48,7 +50,12 @@ fn is_absolute_path(normalized: &str) -> bool {
         }
     }
     // Windows device path: \\.\  or \\?\
-    if chars.len() >= 4 && chars[0] == '\\' && chars[1] == '\\' && (chars[2] == '.' || chars[2] == '?') && chars[3] == '\\' {
+    if chars.len() >= 4
+        && chars[0] == '\\'
+        && chars[1] == '\\'
+        && (chars[2] == '.' || chars[2] == '?')
+        && chars[3] == '\\'
+    {
         return true;
     }
     false
@@ -82,7 +89,11 @@ fn validate_heading_path(text: &str) -> Result<PathBuf, String> {
 pub fn default_output_path(input: &Path) -> PathBuf {
     let mut p = input.to_path_buf();
     p.set_extension("");
-    PathBuf::from(format!("{}{}", p.to_string_lossy(), constants::UNPACKED_SUFFIX))
+    PathBuf::from(format!(
+        "{}{}",
+        p.to_string_lossy(),
+        constants::UNPACKED_SUFFIX
+    ))
 }
 
 pub fn resolve_unpack_output(output: &Path) -> PathBuf {
@@ -90,7 +101,8 @@ pub fn resolve_unpack_output(output: &Path) -> PathBuf {
         return output.to_path_buf();
     }
     let dir = output.parent().unwrap_or(Path::new("."));
-    let stem = output.file_name()
+    let stem = output
+        .file_name()
         .map(|s| s.to_string_lossy().to_string())
         .unwrap_or_default();
     for i in 1..=9999u32 {
@@ -109,16 +121,16 @@ pub fn resolve_unpack_output(output: &Path) -> PathBuf {
 pub fn unpack_docx(input: &Path, output: &Path) -> Result<UnpackResult, String> {
     let doc = read_docx(std::fs::File::open(input).map_err(|e| format!("Open input: {}", e))?)
         .map_err(|e| format!("Read DOCX: {}", e))?;
-    
+
     let mut file_count = 0;
-    
+
     // Create output directory
     fs::create_dir_all(output).map_err(|e| format!("Create output dir: {}", e))?;
-    
+
     // For each paragraph, if it's a heading, create a file
     let mut current_heading: Option<String> = None;
     let mut current_content = String::new();
-    
+
     for paragraph in &doc.paragraphs {
         if paragraph.is_heading() {
             // Save previous file if heading is non-empty
@@ -128,16 +140,21 @@ pub fn unpack_docx(input: &Path, output: &Path) -> Result<UnpackResult, String> 
                     let heading_path = validate_heading_path(heading)?;
                     let full_path = output.join(&heading_path);
                     if let Some(parent) = full_path.parent() {
-                        fs::create_dir_all(parent).map_err(|e| format!("Create parent dir: {}", e))?;
+                        fs::create_dir_all(parent)
+                            .map_err(|e| format!("Create parent dir: {}", e))?;
                     }
                     fs::write(&full_path, &content).map_err(|e| format!("Write file: {}", e))?;
                     file_count += 1;
                 }
             }
-            
-            current_heading = Some(paragraph.runs.first()
-                .map(|r| r.text.clone())
-                .unwrap_or_default());
+
+            current_heading = Some(
+                paragraph
+                    .runs
+                    .first()
+                    .map(|r| r.text.clone())
+                    .unwrap_or_default(),
+            );
             current_content = String::new();
         } else {
             for run in &paragraph.runs {
@@ -146,7 +163,7 @@ pub fn unpack_docx(input: &Path, output: &Path) -> Result<UnpackResult, String> 
             current_content.push('\n');
         }
     }
-    
+
     // Save last file
     if let Some(ref heading) = current_heading {
         if !heading.is_empty() {
@@ -160,7 +177,7 @@ pub fn unpack_docx(input: &Path, output: &Path) -> Result<UnpackResult, String> 
             file_count += 1;
         }
     }
-    
+
     Ok(UnpackResult {
         file_count,
         output_dir: output.to_path_buf(),

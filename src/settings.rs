@@ -21,7 +21,10 @@ fn default_language() -> String {
 }
 
 fn default_encodings() -> Vec<String> {
-    DEFAULT_LOCAL_ENCODINGS.iter().map(|s| s.to_string()).collect()
+    DEFAULT_LOCAL_ENCODINGS
+        .iter()
+        .map(|s| s.to_string())
+        .collect()
 }
 
 impl Default for Settings {

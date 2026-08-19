@@ -5,7 +5,7 @@ use docpack::docx::reader::read_docx;
 use docpack::docx::writer::write_docx;
 use docpack::ignore::ExcludeRules;
 use docpack::lang::I18n;
-use docpack::pack::{is_text_file, pack_dir, collect_text_files};
+use docpack::pack::{collect_text_files, is_text_file, pack_dir};
 use docpack::platform::install::{ContextMenu, Platform};
 use docpack::unpack::unpack_docx;
 use std::io::{Cursor, Write};
@@ -87,9 +87,18 @@ fn test_docx_model_add_text() {
 
 #[test]
 fn test_docx_model_is_heading() {
-    let h = docpack::docx::model::Paragraph { style: Some("Heading1".into()), runs: vec![] };
-    let h2 = docpack::docx::model::Paragraph { style: Some("Heading2".into()), runs: vec![] };
-    let t = docpack::docx::model::Paragraph { style: None, runs: vec![] };
+    let h = docpack::docx::model::Paragraph {
+        style: Some("Heading1".into()),
+        runs: vec![],
+    };
+    let h2 = docpack::docx::model::Paragraph {
+        style: Some("Heading2".into()),
+        runs: vec![],
+    };
+    let t = docpack::docx::model::Paragraph {
+        style: None,
+        runs: vec![],
+    };
     assert!(h.is_heading());
     assert!(h2.is_heading());
     assert!(!t.is_heading());
@@ -365,7 +374,10 @@ fn test_unpack_multiple_body_paragraphs() {
 
     let file1 = unpack_dir.join("file1.txt");
     assert!(file1.exists());
-    assert_eq!(std::fs::read_to_string(file1).unwrap(), "line1\nline2\nline3");
+    assert_eq!(
+        std::fs::read_to_string(file1).unwrap(),
+        "line1\nline2\nline3"
+    );
 
     let file2 = unpack_dir.join("file2.txt");
     assert!(file2.exists());
@@ -423,7 +435,10 @@ fn test_unpack_multi_line_content_preserves_newlines() {
 
     let file1 = unpack_dir.join("file.txt");
     assert!(file1.exists());
-    assert_eq!(std::fs::read_to_string(file1).unwrap(), "line1\nline2\nline3");
+    assert_eq!(
+        std::fs::read_to_string(file1).unwrap(),
+        "line1\nline2\nline3"
+    );
 }
 
 #[test]
